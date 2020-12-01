@@ -20,7 +20,9 @@ import time
 import discord
 from discord.ext import commands
 
+""" References """
 # https://stackoverflow.com/questions/19695214/python-screenshot-of-inactive-window-printwindow-win32gui
+# https://nanonets.com/blog/ocr-with-tesseract/
 
 """ Defining the preprocessing functions. """
 
@@ -94,66 +96,27 @@ def match_template(image, template):
 
 
 # Definging a the config
-custom_config = r'--oem 0 --psm 6'
+custom_config = r'--oem 0 --psm 6' # Define the settings for pytesseract
 
 
 """ Actual code for capturing screen and checking condition """
-
-""" # The initial values of TOP and LEFT.
-# Can be changed under certain conditions
-top_value = 800
-left_value = 1920 """
-
-""" def main(image_captures):
-    while True:
-        with mss.mss() as sct:
-            # The screen part to capture
-            monitor = {"top": top_value, "left": left_value, "width": 160, "height": 135}
-
-            # Grab the data
-            sct_img = sct.grab(monitor)
-            cv2.imshow('test', np.array(sct_img))
-
-            gray = get_grayscale(np.array(sct_img))
-            noise = remove_noise(gray)
-            thresh = thresholding(noise)
-            checkString = pytesseract.image_to_string(thresh, config=custom_config)
-            # print("Using Thresh: " + checkString)
-            if "Pixelmon" in checkString:
-                playsound('Suction.mp3')
-            if cv2.waitKey(25) & 0xFF == ord('q'):
-                cv2.destroyAllWindows()
-                break
-            # Save to the picture file """
-
-
 def main():
     while True:
         with mss.mss() as sct:
-            # The screen part to capture
-            # monitor = {"top": top_value, "left": left_value, "width": 160, "height": 135}
-            # Grab the data
-            # sct_img = sct.grab(monitor)
-            if (screen_capture()):
-                break
+            screen_capture()
+            # Stop the program on button press (Must be done locally. Does not work if focus is on background app.)
             if cv2.waitKey(25) & 0xFF == ord('q'):
                 cv2.destroyAllWindows()
                 break
-            # Save to the picture file
 
 # Function that captures a specific window (does not need to be visible) instead of a screen.
 
 
-def screen_capture():
+def screen_capture():  # Credits to hazzey on StackOverFlow.
     hwnd = win32gui.FindWindow(None, 'Minecraft 1.12.2')
-
-    # Change the line below depending on whether you want the whole window
-    # or just the client area.
     left, top, right, bot = win32gui.GetClientRect(hwnd)
-    # left, top, right, bot = win32gui.GetWindowRect(hwnd)
-    w = right - left  # 750
+    w = right - left
     h = bot - top
-    # h = 500
 
     hwndDC = win32gui.GetWindowDC(hwnd)
     mfcDC = win32ui.CreateDCFromHandle(hwndDC)
@@ -164,11 +127,7 @@ def screen_capture():
 
     saveDC.SelectObject(saveBitMap)
 
-    # Change the line below depending on whether you want the whole window
-    # or just the client area.
     result = windll.user32.PrintWindow(hwnd, saveDC.GetSafeHdc(), 1)
-    # result = windll.user32.PrintWindow(hwnd, saveDC.GetSafeHdc(), 0)
-    """ print(result) """
 
     bmpinfo = saveBitMap.GetInfo()
     bmpstr = saveBitMap.GetBitmapBits(True)
@@ -183,11 +142,13 @@ def screen_capture():
     mfcDC.DeleteDC()
     win32gui.ReleaseDC(hwnd, hwndDC)
 
-    if result == 1:
-        # PrintWindow Succeeded
+    if result == 1:         # PrintWindow Succeeded
+        # Original Code
+        # Define an area of the window to focus on.
         screen = np.array(im)
-        crop = screen[670:870, 0:160]
-        # cv2.imshow('test', screen)
+        crop = screen[670:870, 0:160] # Will need to change these values based off the resolution of the window.
+
+        # Apply some image preprocessing
         gray = get_grayscale(crop)
         noise = remove_noise(gray)
         thresh = thresholding(noise)
@@ -196,6 +157,4 @@ def screen_capture():
         if "Pixelmon" in checkString:
             playsound('Suction.mp3')
             time.sleep(5)
-        # main(new_capture)
-        # im.save("test.png")
 main()
